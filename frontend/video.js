@@ -96,7 +96,7 @@ async function loadData() {
  */
 function getMatchForPose(pose) {
     if (!pose?.landmarks) return null;
-    const kp = landmarksToNormalizedKeypoints(pose.landmarks);
+    const kp = landmarksToPixelKeypoints(pose.landmarks);
     return findClosestPoses(NORMALIZED_POSES, POSE_CLUSTERS?.clusters, kp);
 }
 
@@ -137,17 +137,19 @@ function landmarksToCanvasKeypoints(landmarks, canvas, videoW, videoH) {
 const MIN_VISIBILITY = 0.5;
 
 /**
- * Convert raw MediaPipe landmarks to normalized [0,1] keypoints.
- * This is for CLUSTER MATCHING (not drawing). Uses MediaPipe's native
- * normalized coordinates (0-1 range), no pixel conversion needed.
+ * Convert raw MediaPipe landmarks to video pixel keypoints.
+ * This is for CLUSTER MATCHING (not drawing). MediaPipe scales x by the
+ * frame width and y by the frame height, so we scale both back to pixels
+ * to keep the pose's real proportions.
  */
-function landmarksToNormalizedKeypoints(landmarks) {
+function landmarksToPixelKeypoints(landmarks) {
+    const { videoWidth, videoHeight } = $('videoElement');
     const kp = {};
     for (const name in LANDMARK_MAP) {
         const lm = landmarks[LANDMARK_MAP[name]];
         if (lm) {
             const vis = lm.visibility ?? 1;
-            if (vis >= MIN_VISIBILITY) kp[name] = { x: lm.x, y: lm.y };
+            if (vis >= MIN_VISIBILITY) kp[name] = { x: lm.x * videoWidth, y: lm.y * videoHeight };
         }
     }
     // Derive neck and midhip
@@ -388,7 +390,7 @@ function selectPose(index) {
     };
 
     if (pose.landmarks) {
-        const kp = landmarksToNormalizedKeypoints(pose.landmarks);
+        const kp = landmarksToPixelKeypoints(pose.landmarks);
         updatePatternPanel(kp);
     }
 
@@ -492,7 +494,7 @@ async function processVideoInBackground(video) {
 
         if (result?.poseLandmarks) {
             const landmarks = result.poseLandmarks.map(lm => ({ x: lm.x, y: lm.y, z: lm.z, visibility: lm.visibility }));
-            const kp = landmarksToNormalizedKeypoints(landmarks);
+            const kp = landmarksToPixelKeypoints(landmarks);
 
             const match = findClosestPoses(NORMALIZED_POSES, POSE_CLUSTERS?.clusters, kp);
             drawSkeleton(ctx, landmarksToCanvasKeypoints(landmarks, canvas, video.videoWidth, video.videoHeight));
@@ -624,7 +626,7 @@ function stopPlayback() {
     $('poseCounter').textContent = `${closestIdx + 1} / ${extractedPoses.length}`;
     const pose = extractedPoses[closestIdx];
     if (pose?.landmarks) {
-        const kp = landmarksToNormalizedKeypoints(pose.landmarks);
+        const kp = landmarksToPixelKeypoints(pose.landmarks);
         updatePatternPanel(kp);
     }
     const thumb = document.querySelector(`.pose-thumb[data-index="${closestIdx}"]`);
@@ -737,7 +739,7 @@ function showResults() {
     showPrediction();
 
     if (extractedPoses[0]?.landmarks) {
-        const kp = landmarksToNormalizedKeypoints(extractedPoses[0].landmarks);
+        const kp = landmarksToPixelKeypoints(extractedPoses[0].landmarks);
         updatePatternPanel(kp);
     }
     updateMatchingClusters();
