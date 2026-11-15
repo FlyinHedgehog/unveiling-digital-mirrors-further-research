@@ -18,7 +18,6 @@ from scipy import stats
 from sklearn.cluster import KMeans
 from sklearn.metrics import silhouette_score
 from pathlib import Path
-import json
 
 # --- Constants from the paper ---
 
@@ -208,13 +207,6 @@ def analyze_clusters(labels, vectors, df):
         else:
             character = 'neutral'
 
-        # --- Individual poses for drill-down view ---
-        all_poses = []
-        for i in np.where(mask)[0]:
-            pose = vector_to_pose_dict(vectors[i])
-            pose['gender'] = df.iloc[i]['gender']
-            all_poses.append(pose)
-
         clusters_info.append({
             'id': int(cluster_id),
             'size': int(total),
@@ -225,7 +217,6 @@ def analyze_clusters(labels, vectors, df):
             'pValue': float(p_value) if not np.isnan(p_value) else None,
             'character': character,
             'prototype': prototype,
-            'poses': all_poses,
         })
 
     print(f"Exported {len(clusters_info)} clusters")
@@ -259,12 +250,8 @@ def export_clusters_csv(clusters_info, output_path):
             }
             # Add joint coordinates
             for joint in JOINTS:
-                if joint in c['prototype']:
-                    row[f'x_{joint}'] = "{:.6f}".format(c['prototype'][joint]['x'])
-                    row[f'y_{joint}'] = "{:.6f}".format(c['prototype'][joint]['y'])
-                else:
-                    row[f'x_{joint}'] = ''
-                    row[f'y_{joint}'] = ''
+                row[f'x_{joint}'] = "{:.6f}".format(c['prototype'][joint]['x'])
+                row[f'y_{joint}'] = "{:.6f}".format(c['prototype'][joint]['y'])
             writer.writerow(row)
     print(f"Exported clusters to {output_path}")
 
