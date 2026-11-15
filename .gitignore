@@ -35,14 +35,8 @@ ENV/
 Thumbs.db
 .env
 
-# Data files
-!data/
+# Notebook figures
 data/output/
-!data/images/
-!data/videos/
-!data/*.csv
-Prototypes.zip
-Prototypes/
 
 # Logs
 *.log

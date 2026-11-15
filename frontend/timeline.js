@@ -38,8 +38,6 @@ export function drawTimeline(canvas, poses, getMatchFn, activeIndex = -1) {
     if (!canvas || !poses || poses.length === 0) return;
 
     const ctx = canvas.getContext('2d');
-    const W = canvas.width;
-    const H = canvas.height;
     const dpr = window.devicePixelRatio || 1;
 
     // High-DPI support

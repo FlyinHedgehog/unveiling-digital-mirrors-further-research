@@ -1,15 +1,13 @@
 """
 Local HTTP server for Digital Mirrors in Motion.
-Serves frontend/ (HTML, JS, CSS, data/) on http://localhost:8000.
+Serves the repository root (frontend/ and data/) on http://localhost:8000.
 
 Usage:
     python scripts/server.py
-Then open http://localhost:8000 in browser.
+Then open http://localhost:8000/frontend/index.html in browser.
 """
 
 import http.server
-import socketserver
-import os
 from pathlib import Path
 
 PORT = 8000
@@ -23,6 +21,8 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         if self.path.startswith('/api/list'):
             import json, urllib.parse
             media_type = urllib.parse.parse_qs(urllib.parse.urlparse(self.path).query).get('type', ['videos'])[0]
+            if media_type not in ('videos', 'images'):
+                media_type = 'videos'
             target = ROOT_DIRECTORY / 'data' / media_type
             files = sorted([f.name for f in target.iterdir() if f.is_file() and f.suffix.lower() in {'.mp4', '.webm', '.mov', '.jpg', '.jpeg', '.png', '.webp'}]) if target.exists() else []
             self.send_response(200)
@@ -33,9 +33,7 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         return super().do_GET()
 
 if __name__ == "__main__":
-    os.chdir(ROOT_DIRECTORY)
-    
-    with socketserver.TCPServer(("", PORT), Handler) as httpd:
+    with http.server.ThreadingHTTPServer(("127.0.0.1", PORT), Handler) as httpd:
         print(f"Digital Mirrors in Motion - Pose Analysis Tool")
         print(f"=" * 50)
         print(f"Server running at: http://localhost:{PORT}/frontend/index.html")

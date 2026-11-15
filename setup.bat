@@ -10,10 +10,10 @@ if %errorlevel% neq 0 (
 )
 
 echo Syncing environment with uv...
-uv sync
+uv sync || (pause & exit /b 1)
 
 echo Generating pose clusters and normalized data...
-uv run python scripts\cluster_poses.py
+uv run python scripts\cluster_poses.py || (pause & exit /b 1)
 
 echo Environment is ready!
 echo Starting the local server...

@@ -1,14 +1,13 @@
 /**
  * IMAGE POSE ANALYSIS
  * ===================
- * Single-image pose detection via MediaPipe; match to 150 pose clusters from
- * Tsolak & Kühne (2025). Shows gender-associated pattern (masculine/feminine/neutral).
+ * Single-image pose detection via MediaPipe; match to the nearest dataset pose and
+ * report its cluster (150 clusters, Tsolak & Kühne 2025) as masculine/feminine/neutral.
  */
 
 import {
     BONES,
     findClosestPoses,
-    getTopMatchPoses,
     getGenderColor,
     drawMiniSkeleton,
     getHowItWorksHTML,
@@ -101,14 +100,13 @@ function updatePatternPanel(keypoints) {
     }
     const clusters = POSE_CLUSTERS?.clusters;
     const match = findClosestPoses(NORMALIZED_POSES, clusters, keypoints);
-    const topMatches = getTopMatchPoses(NORMALIZED_POSES, clusters, keypoints);
     if (!match) {
         container.innerHTML = '<p class="placeholder-text">No pose match</p>';
         return;
     }
 
-    const primaryCluster = topMatches[0].cluster;
-    const primaryPose = topMatches[0].pose;
+    const primaryCluster = match.cluster;
+    const primaryPose = match.matchedPoses[0];
     const label = match.character === 'masculine' ? 'Masculine-associated' : match.character === 'feminine' ? 'Feminine-associated' : 'Neutral';
     const malePct = match.malePercent.toFixed(0);
     const femalePct = match.femalePercent.toFixed(0);
@@ -128,14 +126,14 @@ function updatePatternPanel(keypoints) {
         <div class="matched-categories">
             <h4>Matched Pose Instance:</h4>
             <div class="match-grid" style="display: flex; gap: 1rem; align-items: stretch;">
-                <div class="match-card" style="flex: 1; min-width: 0; background-color: var(--surface0); display: flex; flex-direction: column; align-items: center; padding: 0.5rem; border-radius: 8px;">
+                <div class="match-card" style="flex: 1; min-width: 0; background-color: var(--surface); display: flex; flex-direction: column; align-items: center; padding: 0.5rem; border-radius: 8px;">
                     <canvas id="matchCanvasProto" width="80" height="100"></canvas>
                     <div class="match-info" style="text-align: center; margin-top: 0.5rem;">
                         <span style="display: block; font-weight: 600; font-size: 1.1em;">#${primaryCluster.id} (Prototype)</span>
                         <span class="match-stats" style="display: block;">${primaryCluster.malePercent.toFixed(0)}%M / ${primaryCluster.femalePercent.toFixed(0)}%F</span>
                     </div>
                 </div>
-                <div class="match-card" style="flex: 1; min-width: 0; background-color: var(--surface0); display: flex; flex-direction: column; align-items: center; padding: 0.5rem; border-radius: 8px;">
+                <div class="match-card" style="flex: 1; min-width: 0; background-color: var(--surface); display: flex; flex-direction: column; align-items: center; padding: 0.5rem; border-radius: 8px;">
                     <canvas id="matchCanvasPose" width="80" height="100"></canvas>
                     <div class="match-info" style="text-align: center; margin-top: 0.5rem;">
                         <span style="display: block; font-weight: 600; font-size: 1.1em;">Dataset Pose</span>
@@ -184,7 +182,7 @@ function convertLandmarks(landmarks, canvasW, canvasH, imgW, imgH) {
     const w = imgW * scale, h = imgH * scale;
     const offsetX = (canvasW - w) / 2, offsetY = (canvasH - h) / 2;
     // MediaPipe landmark index → our 17-joint format.
-    // Note: indices 29/30 are "left/right foot index" (closest to OpenPose big toe).
+    // Note: indices 31/32 are "left/right foot index" (closest to OpenPose big toe).
     // MediaPipe does NOT output neck or midhip — we derive them below.
     const map = {
         nose: 0, lshoulder: 11, rshoulder: 12, lelbow: 13, relbow: 14,
@@ -208,25 +206,23 @@ function convertLandmarks(landmarks, canvasW, canvasH, imgW, imgH) {
 
 /** Initialize MediaPipe Pose (warm-up with test image) */
 async function initMediaPipe() {
-    return new Promise((resolve) => {
-        mediapipePose = new Pose({
-            locateFile: file => `https://cdn.jsdelivr.net/npm/@mediapipe/pose@0.5.1675469404/${file}`
-        });
-        mediapipePose.setOptions({
-            modelComplexity: 1,
-            smoothLandmarks: true,
-            minDetectionConfidence: 0.5,
-            minTrackingConfidence: 0.5
-        });
-        mediapipePose.onResults(handlePoseResults);
-        const testCanvas = document.createElement('canvas');
-        testCanvas.width = 100;
-        testCanvas.height = 100;
-        testCanvas.getContext('2d').fillRect(0, 0, 100, 100);
-        pendingCallback = () => { mediapipeReady = true; resolve(); };
-        mediapipePose.send({ image: testCanvas }).catch(() => { mediapipeReady = true; resolve(); });
-        setTimeout(() => { if (!mediapipeReady) { mediapipeReady = true; resolve(); } }, 8000);
+    mediapipePose = new Pose({
+        locateFile: file => `https://cdn.jsdelivr.net/npm/@mediapipe/pose@0.5.1675469404/${file}`
     });
+    mediapipePose.setOptions({
+        modelComplexity: 1,
+        smoothLandmarks: true,
+        minDetectionConfidence: 0.5,
+        minTrackingConfidence: 0.5
+    });
+    mediapipePose.onResults(handlePoseResults);
+    const testCanvas = document.createElement('canvas');
+    testCanvas.width = 100;
+    testCanvas.height = 100;
+    testCanvas.getContext('2d').fillRect(0, 0, 100, 100);
+    // send() resolves once the model has loaded and processed the test image
+    await mediapipePose.send({ image: testCanvas }).catch(() => {});
+    mediapipeReady = true;
 }
 
 // -----------------------------------------------------------------------------
@@ -249,6 +245,8 @@ async function processImage(img) {
             updateMatchingClusters();
             resolve(kp);
         };
+        // Each image is unrelated to the previous one, so drop the tracking state first
+        mediapipePose.reset();
         mediapipePose.send({ image: img }).catch(() => {
             clearTimeout(timeout);
             pendingCallback = null;
@@ -271,6 +269,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         $('uploadPlaceholder').style.display = 'none';
         $('previewArea').style.display = 'flex';
         $('clearBtn').style.display = 'inline-block';
+        updatePatternPanel(null);
         const img = new Image();
         img.onload = async () => {
             const canvas = $('previewCanvas');
@@ -279,7 +278,11 @@ document.addEventListener('DOMContentLoaded', async () => {
             const scale = Math.min(canvas.width / img.width, canvas.height / img.height);
             const w = img.width * scale, h = img.height * scale;
             ctx.drawImage(img, (canvas.width - w) / 2, (canvas.height - h) / 2, w, h);
-            await processImage(img);
+            const kp = await processImage(img);
+            if (!kp) $('patternContent').innerHTML = '<p class="placeholder-text">No pose detected in this image</p>';
+        };
+        img.onerror = () => {
+            $('patternContent').innerHTML = '<p class="placeholder-text">Could not load this image</p>';
         };
         img.src = URL.createObjectURL(file);
     }
@@ -319,7 +322,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         $('previewArea').style.display = 'none';
         $('clearBtn').style.display = 'none';
         $('imageInput').value = '';
-        updatePatternPanel(null);
+        $('patternContent').innerHTML = '<p class="placeholder-text">Upload an image to see pose analysis</p>';
         updateMatchingClusters();
     };
 });

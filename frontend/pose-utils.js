@@ -7,7 +7,7 @@
  * and matching pipeline used in cluster_poses.py (Python backend).
  *
  * Pipeline: Raw keypoints → Normalize (bounding box → origin → unit vector)
- *           → Euclidean distance to 150 cluster prototypes → Nearest match
+ *           → Euclidean distance to every dataset pose → cluster of the nearest one
  *
  * Based on: Tsolak & Kühne (2025), "Unveiling digital mirrors: Decoding
  * gendered body poses in Instagram imagery", CHB 163.
@@ -53,7 +53,7 @@ export const KEYPOINT_NAMES = [
  *   1. Collect x/y values for all detected joints (in KEYPOINT_NAMES order).
  *   2. Bounding-box shift: bottom-left = (x_min, y_max) becomes (0, 0).
  *      (In image coordinates y increases downward, so "bottom" = max y.)
- *   3. Flatten to a 1-D vector [x'_0, y'_0, x'_1, y'_1, ...].
+ *   3. Flatten to a 1-D vector [x'_0, x'_1, ..., y'_0, y'_1, ...].
  *   4. Normalize to unit length (L2 norm = 1).
  *
  * @param {Object} kp - {joint_name: {x, y}} for detected joints
@@ -107,23 +107,6 @@ export function normalizeKeypoints(kp) {
     return normalized;
 }
 
-/** Per-joint distances for debug/trace. Returns [{joint, distance}, ...] sorted by distance desc. */
-export function getPerJointDistances(pose1, pose2) {
-    if (!pose1 || !pose2) return [];
-    const norm1 = normalizeKeypoints(pose1);
-    const norm2 = normalizeKeypoints(pose2);
-    if (!norm1 || !norm2) return [];
-    const joints = [];
-    for (const name of KEYPOINT_NAMES) {
-        if (norm1[name] && norm2[name]) {
-            const dx = norm1[name].x - norm2[name].x;
-            const dy = norm1[name].y - norm2[name].y;
-            joints.push({ joint: name, distance: Math.sqrt(dx * dx + dy * dy) });
-        }
-    }
-    return joints.sort((a, b) => b.distance - a.distance);
-}
-
 /**
  * Euclidean distance between two normalized poses.
  * This is the core metric used for cluster matching (paper Section 3.3).
@@ -142,32 +125,6 @@ export function poseDistance(pose1, pose2) {
     }
     return count > 0 ? Math.sqrt(sumSq) : Infinity;
 }
-
-/** Return the best matching pose by distance, with similarity score (0–100) */
-export function getTopMatchPoses(poses, clusters, keypoints) {
-    if (!poses || !clusters || !keypoints) return [];
-    const normalizedPose = normalizeKeypoints(keypoints);
-    if (!normalizedPose) return [];
-
-    let bestPose = null, bestDist = Infinity;
-    for (let i = 0; i < poses.length; i++) {
-        const distance = poseDistance(normalizedPose, poses[i].keypoints);
-        if (distance < bestDist) {
-            bestDist = distance;
-            bestPose = poses[i];
-        }
-    }
-    if (!bestPose) return [];
-
-    const cluster = clusters.find(c => c.id === bestPose.cluster_id);
-    return [{
-        pose: bestPose,
-        cluster,
-        distance: bestDist,
-        similarity: Math.round(100 / (1 + bestDist))
-    }];
-}
-
 
 /**
  * Find the best-matching individual pose for a detected pose.
@@ -215,7 +172,7 @@ export function getGenderColor(cluster) {
 
 /**
  * Draw a mini stick-figure skeleton on a canvas element.
- * Used for cluster prototype thumbnails in the gallery/match cards.
+ * Used for the match cards and the Database page.
  * Auto-scales and centers the pose within the canvas bounding box.
  */
 export function drawMiniSkeleton(canvas, pose, color = '#f9e2af') {
@@ -226,7 +183,6 @@ export function drawMiniSkeleton(canvas, pose, color = '#f9e2af') {
     // Compute bounding box of all joints to scale the skeleton to fit
     let xMin = Infinity, xMax = -Infinity, yMin = Infinity, yMax = -Infinity;
     for (const name in pose) {
-        if (name === 'gender') continue; // skip metadata field
         if (pose[name]?.x !== undefined) {
             xMin = Math.min(xMin, pose[name].x);
             xMax = Math.max(xMax, pose[name].x);
@@ -246,7 +202,6 @@ export function drawMiniSkeleton(canvas, pose, color = '#f9e2af') {
     // Transform joint coordinates to canvas pixels
     const kp = {};
     for (const name in pose) {
-        if (name === 'gender') continue;
         if (pose[name] && typeof pose[name].x === 'number') {
             kp[name] = { x: pose[name].x * scale + offsetX, y: pose[name].y * scale + offsetY };
         }
@@ -294,7 +249,7 @@ export function parsePoseClustersCSV(csvText) {
             femalePercent: +row.femalePercent,
             nonbinaryPercent: +row.nonbinaryPercent,
             significant: row.significant === '1',
-            pValue: +row.pValue,
+            pValue: row.pValue === '' ? null : +row.pValue,
             size: +row.size,
             prototype: {}
         };

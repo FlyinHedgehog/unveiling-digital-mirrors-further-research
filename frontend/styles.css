@@ -511,14 +511,6 @@ body {
     gap: 10px;
 }
 
-.nav-hint {
-    font-size: 0.7rem;
-    color: var(--muted);
-    background: var(--surface);
-    padding: 4px 8px;
-    border-radius: 4px;
-}
-
 .poses-container {
     display: flex;
     gap: 10px;
@@ -546,7 +538,6 @@ body {
     background: var(--surface-light);
 }
 
-.pose-thumb canvas,
 .pose-thumb .pose-thumb-img {
     display: block;
     margin-bottom: 5px;
@@ -566,36 +557,10 @@ body {
     color: var(--muted);
 }
 
-.pose-cluster,
 .pose-label {
     display: block;
     font-size: 0.7rem;
     font-weight: bold;
-}
-
-/* K selector */
-.k-selector-row {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin-bottom: 16px;
-    padding-bottom: 12px;
-    border-bottom: 1px solid var(--surface-light);
-}
-
-.k-selector-row label {
-    font-size: 0.9rem;
-    color: var(--muted);
-}
-
-.k-selector-row select {
-    padding: 6px 12px;
-    border-radius: 8px;
-    background: var(--surface-light);
-    color: var(--light);
-    border: 1px solid var(--surface);
-    font-size: 0.9rem;
-    cursor: pointer;
 }
 
 .match-sections {
@@ -650,13 +615,6 @@ body {
 
 .match-section .bar-segment.female {
     background: var(--female-color);
-}
-
-.match-section .result-explanation {
-    font-size: 0.75rem;
-    color: var(--muted);
-    margin-top: 6px;
-    line-height: 1.4;
 }
 
 /* How it works */
@@ -721,10 +679,6 @@ body {
     font-weight: 600;
 }
 
-.match-sim {
-    color: var(--primary) !important;
-}
-
 .match-stats {
     color: var(--muted);
     font-size: 0.65rem;
@@ -756,10 +710,6 @@ body {
     display: flex;
     flex-direction: column;
     align-items: center;
-}
-
-.cluster-card.mini {
-    padding: 8px;
 }
 
 .cluster-card canvas {
@@ -807,12 +757,6 @@ body {
 
 .popup-close:hover {
     color: var(--light);
-}
-
-.all-poses-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
-    gap: 12px;
 }
 
 .cluster-id {
