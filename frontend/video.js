@@ -92,12 +92,10 @@ async function loadData() {
 
 /**
  * Get the cluster match for a pose object (used by timeline and gallery).
- * Converts raw MediaPipe landmarks → normalized keypoints → closest cluster.
+ * The match is computed once during extraction and stored on the pose.
  */
 function getMatchForPose(pose) {
-    if (!pose?.landmarks) return null;
-    const kp = landmarksToPixelKeypoints(pose.landmarks);
-    return findClosestPoses(NORMALIZED_POSES, POSE_CLUSTERS?.clusters, kp);
+    return pose?.match ?? null;
 }
 
 // -----------------------------------------------------------------------------
