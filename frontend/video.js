@@ -65,6 +65,9 @@ const LANDMARK_MAP = {
     lankle: 27, rankle: 28, bigtoe: 31, rbigtoe: 32
 };
 
+// Landmarks MediaPipe is less sure about than this are left out
+const MIN_VISIBILITY = 0.5;
+
 const $ = id => document.getElementById(id);
 
 // -----------------------------------------------------------------------------
@@ -129,8 +132,6 @@ function landmarksToCanvasKeypoints(landmarks, canvas, videoW, videoH) {
     }
     return kp;
 }
-
-const MIN_VISIBILITY = 0.5;
 
 /**
  * Convert raw MediaPipe landmarks to video pixel keypoints.

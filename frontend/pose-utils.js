@@ -107,23 +107,6 @@ export function normalizeKeypoints(kp) {
     return normalized;
 }
 
-/** Per-joint distances for debug/trace. Returns [{joint, distance}, ...] sorted by distance desc. */
-export function getPerJointDistances(pose1, pose2) {
-    if (!pose1 || !pose2) return [];
-    const norm1 = normalizeKeypoints(pose1);
-    const norm2 = normalizeKeypoints(pose2);
-    if (!norm1 || !norm2) return [];
-    const joints = [];
-    for (const name of KEYPOINT_NAMES) {
-        if (norm1[name] && norm2[name]) {
-            const dx = norm1[name].x - norm2[name].x;
-            const dy = norm1[name].y - norm2[name].y;
-            joints.push({ joint: name, distance: Math.sqrt(dx * dx + dy * dy) });
-        }
-    }
-    return joints.sort((a, b) => b.distance - a.distance);
-}
-
 /**
  * Euclidean distance between two normalized poses.
  * This is the core metric used for cluster matching (paper Section 3.3).
@@ -200,7 +183,6 @@ export function drawMiniSkeleton(canvas, pose, color = '#f9e2af') {
     // Compute bounding box of all joints to scale the skeleton to fit
     let xMin = Infinity, xMax = -Infinity, yMin = Infinity, yMax = -Infinity;
     for (const name in pose) {
-        if (name === 'gender') continue; // skip metadata field
         if (pose[name]?.x !== undefined) {
             xMin = Math.min(xMin, pose[name].x);
             xMax = Math.max(xMax, pose[name].x);
@@ -220,7 +202,6 @@ export function drawMiniSkeleton(canvas, pose, color = '#f9e2af') {
     // Transform joint coordinates to canvas pixels
     const kp = {};
     for (const name in pose) {
-        if (name === 'gender') continue;
         if (pose[name] && typeof pose[name].x === 'number') {
             kp[name] = { x: pose[name].x * scale + offsetX, y: pose[name].y * scale + offsetY };
         }
