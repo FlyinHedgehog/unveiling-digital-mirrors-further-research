@@ -19,13 +19,13 @@ What this repo contains
 
 - `data/` — Dataset CSVs, images, and videos used by the application
 - `frontend/` — UI (HTML, JS, CSS)
-- `scripts/` — Python scripts for clustering and pose extraction
+- `scripts/` — Python scripts for clustering and the local web server
 
 What the UI offers
 
 - **Image mode**: single-image pose detection; match to closest individual dataset pose using Euclidean distance, then categorize by its parent cluster.
 - **Video mode**: extract poses at 0.5s intervals; gallery shows each frame with skeleton overlay; match each to closest individual dataset pose; timeline chart shows temporal dynamics; export per-frame data as CSV.
-- **Patterns**: browse 150 pose clusters by gender category; click a cluster to see prototype and all member poses.
+- **Patterns**: browse 150 pose clusters by gender category; click a cluster to see prototype and up to 100 member poses.
 
 Dataset summary
 
@@ -35,13 +35,13 @@ Dataset summary
 
 Clustering methodology (Tsolak & Kühne, 2025)
 - Normalization: bounding box → bottom-left (0,0) → unit-length vector
-- K-means on raw coordinate vectors (Euclidean distance)
+- K-means on normalized coordinate vectors (Euclidean distance)
 - Prototype = arithmetic mean of cluster members
 - Gender labels used only for analysis after clustering
 
 Key configuration
 
-- All 150 clusters kept; significance via multinomial test (p < 0.001/150, Bonferroni).
+- All 150 clusters kept; significance via chi-squared approximation of the multinomial test (p < 0.001/150, Bonferroni); clusters with fewer than 25 poses are not tested.
 - Character: masculine/feminine when significant and over-represented vs null; else neutral.
 - Video limits: `MAX_DURATION = 30s`, `FRAME_INTERVAL = 0.5s`.
 
