@@ -1,10 +1,10 @@
 """
 Local HTTP server for Digital Mirrors in Motion.
-Serves frontend/ (HTML, JS, CSS, data/) on http://localhost:8000.
+Serves the repository root (frontend/ and data/) on http://localhost:8000.
 
 Usage:
     python scripts/server.py
-Then open http://localhost:8000 in browser.
+Then open http://localhost:8000/frontend/index.html in browser.
 """
 
 import http.server

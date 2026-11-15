@@ -9,7 +9,7 @@ Paper methodology (Section 3: Data and Methods):
   2. Normalize each pose: bounding-box → align bottom-left to (0,0) → unit-length vector.
   3. K-means clustering (Euclidean distance) on normalized coordinate vectors.
   4. Prototype = arithmetic column mean of observations in each cluster.
-  5. Gender labels are used ONLY for post-clustering statistical testing (multinomial test).
+  5. Gender labels are used ONLY for post-clustering statistical testing (chi-squared approximation of the multinomial test).
 """
 
 import pandas as pd
@@ -54,12 +54,12 @@ def normalize_poses(df):
 
     Steps for each pose:
       1. Extract x/y coordinates for all JOINTS.
-      2. Compute the bounding box to account for different scales (distance
-         from camera, zoom level, image resolution).
+      2. Compute the bounding box of the pose.
       3. Shift so the bottom-left keypoint sits at (0, 0).
          In image coordinates y increases downward, so "bottom" = max(y).
       4. Flatten to a 1-D vector [x0, x1, …, y0, y1, …].
-      5. Normalize to unit length (L2 norm = 1).
+      5. Normalize to unit length (L2 norm = 1). This removes differences
+         in scale (distance from camera, zoom level, image resolution).
 
     The dataset is pre-filtered to full-body single-person images with
     average confidence > 0.75, so we know that every row has valid
@@ -123,8 +123,8 @@ def cluster_poses(vectors, n_clusters=150):
 def reindex_labels_by_female_pct(labels, df):
     """
     Helper function to reassign cluster IDs from 1 to N based on ascending 
-    female percentage. This ensures Cluster 1 is the most "masculine" 
-    and Cluster 150 is the most "feminine".
+    female percentage (Cluster 1 has the lowest share of women, Cluster 150
+    the highest).
     """
     print("Re-indexing clusters based on female percentage...")
     temp = pd.DataFrame({'label': labels, 'is_female': df['gender'] == 'female'})
@@ -151,7 +151,7 @@ def analyze_clusters(labels, vectors, df):
       - Compute the prototype (arithmetic mean of member vectors).
       - Count the gender distribution.
       - Run a chi-squared goodness-of-fit test (approximation of the exact
-        multinomial test) against the null model of equal proportions.
+        multinomial test) against the gender proportions of the whole sample.
       - Label the cluster as feminine / masculine / neutral based on which
         gender is most over-represented when the test is significant.
 
@@ -183,8 +183,9 @@ def analyze_clusters(labels, vectors, df):
         # --- Statistical test (paper Section 3.2) ---
         # The original paper uses an exact multinomial test (R's "EMT" package).
         # We approximate this with scipy's chi-squared goodness-of-fit test,
-        # which converges to the same result for the cluster sizes in this
-        # dataset but is not identical for very small clusters.
+        # which can differ from the exact test when expected counts are small.
+        # Clusters with an expected count below 1 (fewer than 25 poses) are
+        # not tested and stay neutral.
         observed = np.array([n_female, n_male, n_nb])
         expected = total * np.array([NULL_FEMALE, NULL_MALE, NULL_NB])
 
@@ -219,7 +220,7 @@ def analyze_clusters(labels, vectors, df):
             'prototype': prototype,
         })
 
-    print(f"Exported {len(clusters_info)} clusters")
+    print(f"Analyzed {len(clusters_info)} clusters")
     return clusters_info
 
 
