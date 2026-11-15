@@ -92,7 +92,7 @@ def normalize_poses(df):
     vecs = vecs / norms
 
     print(f"Normalized {len(vecs)} poses "
-          f"(bounding-box → origin shift → unit length)")
+          f"(bounding-box -> origin shift -> unit length)")
     return vecs
 
 
@@ -110,7 +110,7 @@ def cluster_poses(vectors, n_clusters=150):
     centroid positions. With n_init=20 (best of 20 random starts), results
     are robust.
     """
-    print(f"Clustering {len(vectors)} poses into {n_clusters} groups…")
+    print(f"Clustering {len(vectors)} poses into {n_clusters} groups...")
     kmeans = KMeans(n_clusters=n_clusters, random_state=34,
                     n_init=20, max_iter=500)
     labels = kmeans.fit_predict(vectors)
@@ -160,7 +160,7 @@ def analyze_clusters(labels, vectors, df):
     """
     clusters_info = []
     unique_labels = sorted(set(labels))
-    print(f"Analyzing {len(unique_labels)} clusters …")
+    print(f"Analyzing {len(unique_labels)} clusters...")
 
     for cluster_id in unique_labels:
         mask = (labels == cluster_id)
@@ -336,9 +336,9 @@ if __name__ == "__main__":
     print(f"Cluster Size Range:     Min = {min(sizes)}, Max = {max(sizes)}, Avg = {sum(sizes)/len(sizes):.1f}, Med = {sorted(sizes)[len(sizes)//2]}\n")
     
     print(f"Significant Clusters:   {len(sig_clusters)} / {len(clusters_info)}")
-    print(f"  ↳ Feminine Character:  {len(fem_clusters)}")
-    print(f"  ↳ Masculine Character: {len(masc_clusters)}")
-    print(f"  ↳ Neutral Character:   {len(neut_clusters)}")
+    print(f"  - Feminine Character:  {len(fem_clusters)}")
+    print(f"  - Masculine Character: {len(masc_clusters)}")
+    print(f"  - Neutral Character:   {len(neut_clusters)}")
     print("="*48)
 
     print("\nDone!")
