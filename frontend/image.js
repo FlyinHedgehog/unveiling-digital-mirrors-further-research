@@ -126,14 +126,14 @@ function updatePatternPanel(keypoints) {
         <div class="matched-categories">
             <h4>Matched Pose Instance:</h4>
             <div class="match-grid" style="display: flex; gap: 1rem; align-items: stretch;">
-                <div class="match-card" style="flex: 1; min-width: 0; background-color: var(--surface0); display: flex; flex-direction: column; align-items: center; padding: 0.5rem; border-radius: 8px;">
+                <div class="match-card" style="flex: 1; min-width: 0; background-color: var(--surface); display: flex; flex-direction: column; align-items: center; padding: 0.5rem; border-radius: 8px;">
                     <canvas id="matchCanvasProto" width="80" height="100"></canvas>
                     <div class="match-info" style="text-align: center; margin-top: 0.5rem;">
                         <span style="display: block; font-weight: 600; font-size: 1.1em;">#${primaryCluster.id} (Prototype)</span>
                         <span class="match-stats" style="display: block;">${primaryCluster.malePercent.toFixed(0)}%M / ${primaryCluster.femalePercent.toFixed(0)}%F</span>
                     </div>
                 </div>
-                <div class="match-card" style="flex: 1; min-width: 0; background-color: var(--surface0); display: flex; flex-direction: column; align-items: center; padding: 0.5rem; border-radius: 8px;">
+                <div class="match-card" style="flex: 1; min-width: 0; background-color: var(--surface); display: flex; flex-direction: column; align-items: center; padding: 0.5rem; border-radius: 8px;">
                     <canvas id="matchCanvasPose" width="80" height="100"></canvas>
                     <div class="match-info" style="text-align: center; margin-top: 0.5rem;">
                         <span style="display: block; font-weight: 600; font-size: 1.1em;">Dataset Pose</span>
