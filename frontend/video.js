@@ -410,25 +410,23 @@ function handlePoseResults(results) {
 }
 
 async function initMediaPipe() {
-    return new Promise((resolve) => {
-        mediapipePose = new Pose({
-            locateFile: file => `https://cdn.jsdelivr.net/npm/@mediapipe/pose@0.5.1675469404/${file}`
-        });
-        mediapipePose.setOptions({
-            modelComplexity: 1,
-            smoothLandmarks: true,
-            minDetectionConfidence: 0.5,
-            minTrackingConfidence: 0.5
-        });
-        mediapipePose.onResults(handlePoseResults);
-        const testCanvas = document.createElement('canvas');
-        testCanvas.width = 100;
-        testCanvas.height = 100;
-        testCanvas.getContext('2d').fillRect(0, 0, 100, 100);
-        pendingCallback = () => { mediapipeReady = true; resolve(); };
-        mediapipePose.send({ image: testCanvas }).catch(() => { mediapipeReady = true; resolve(); });
-        setTimeout(() => { if (!mediapipeReady) { mediapipeReady = true; resolve(); } }, 8000);
+    mediapipePose = new Pose({
+        locateFile: file => `https://cdn.jsdelivr.net/npm/@mediapipe/pose@0.5.1675469404/${file}`
     });
+    mediapipePose.setOptions({
+        modelComplexity: 1,
+        smoothLandmarks: true,
+        minDetectionConfidence: 0.5,
+        minTrackingConfidence: 0.5
+    });
+    mediapipePose.onResults(handlePoseResults);
+    const testCanvas = document.createElement('canvas');
+    testCanvas.width = 100;
+    testCanvas.height = 100;
+    testCanvas.getContext('2d').fillRect(0, 0, 100, 100);
+    // send() resolves once the model has loaded and processed the test image
+    await mediapipePose.send({ image: testCanvas }).catch(() => {});
+    mediapipeReady = true;
 }
 
 async function detectPose(videoElement) {
