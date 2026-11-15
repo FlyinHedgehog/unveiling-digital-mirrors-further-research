@@ -8,7 +8,6 @@ Then open http://localhost:8000 in browser.
 """
 
 import http.server
-import os
 from pathlib import Path
 
 PORT = 8000
@@ -34,8 +33,6 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         return super().do_GET()
 
 if __name__ == "__main__":
-    os.chdir(ROOT_DIRECTORY)
-    
     with http.server.ThreadingHTTPServer(("127.0.0.1", PORT), Handler) as httpd:
         print(f"Digital Mirrors in Motion - Pose Analysis Tool")
         print(f"=" * 50)
