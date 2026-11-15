@@ -18,7 +18,6 @@
 import {
     BONES,
     findClosestPoses,
-    getTopMatchPoses,
     getGenderColor,
     drawMiniSkeleton,
     getHowItWorksHTML,
@@ -220,14 +219,13 @@ function updatePatternPanel(keypoints) {
     }
     const clusters = POSE_CLUSTERS?.clusters;
     const match = findClosestPoses(NORMALIZED_POSES, clusters, keypoints);
-    const topMatches = getTopMatchPoses(NORMALIZED_POSES, clusters, keypoints);
     if (!match) {
         container.innerHTML = '<p class="placeholder-text">No pose match</p>';
         return;
     }
 
-    const primaryCluster = topMatches[0].cluster;
-    const primaryPose = topMatches[0].pose;
+    const primaryCluster = match.cluster;
+    const primaryPose = match.matchedPoses[0];
     const label = match.character === 'masculine' ? 'Masculine-associated' : match.character === 'feminine' ? 'Feminine-associated' : 'Neutral';
     const malePct = match.malePercent.toFixed(0);
     const femalePct = match.femalePercent.toFixed(0);

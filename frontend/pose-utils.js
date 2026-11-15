@@ -143,32 +143,6 @@ export function poseDistance(pose1, pose2) {
     return count > 0 ? Math.sqrt(sumSq) : Infinity;
 }
 
-/** Return the best matching pose by distance, with similarity score (0–100) */
-export function getTopMatchPoses(poses, clusters, keypoints) {
-    if (!poses || !clusters || !keypoints) return [];
-    const normalizedPose = normalizeKeypoints(keypoints);
-    if (!normalizedPose) return [];
-
-    let bestPose = null, bestDist = Infinity;
-    for (let i = 0; i < poses.length; i++) {
-        const distance = poseDistance(normalizedPose, poses[i].keypoints);
-        if (distance < bestDist) {
-            bestDist = distance;
-            bestPose = poses[i];
-        }
-    }
-    if (!bestPose) return [];
-
-    const cluster = clusters.find(c => c.id === bestPose.cluster_id);
-    return [{
-        pose: bestPose,
-        cluster,
-        distance: bestDist,
-        similarity: Math.round(100 / (1 + bestDist))
-    }];
-}
-
-
 /**
  * Find the best-matching individual pose for a detected pose.
  * Matches against the entire dataset of individual poses and returns
