@@ -817,7 +817,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     if ($('exportCsvBtn')) $('exportCsvBtn').onclick = () => exportCSV(extractedPoses, getMatchForPose);
 
     document.addEventListener('keydown', (e) => {
-        if (extractedPoses.length === 0) return;
+        if (isProcessing || extractedPoses.length === 0) return;
         if (e.key === 'ArrowLeft') { e.preventDefault(); selectPose(currentPoseIndex - 1); }
         if (e.key === 'ArrowRight') { e.preventDefault(); selectPose(currentPoseIndex + 1); }
         if (e.key === ' ') { e.preventDefault(); togglePlayback(); }
