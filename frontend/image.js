@@ -1,8 +1,8 @@
 /**
  * IMAGE POSE ANALYSIS
  * ===================
- * Single-image pose detection via MediaPipe; match to 150 pose clusters from
- * Tsolak & Kühne (2025). Shows gender-associated pattern (masculine/feminine/neutral).
+ * Single-image pose detection via MediaPipe; match to the nearest dataset pose and
+ * report its cluster (150 clusters, Tsolak & Kühne 2025) as masculine/feminine/neutral.
  */
 
 import {
@@ -182,7 +182,7 @@ function convertLandmarks(landmarks, canvasW, canvasH, imgW, imgH) {
     const w = imgW * scale, h = imgH * scale;
     const offsetX = (canvasW - w) / 2, offsetY = (canvasH - h) / 2;
     // MediaPipe landmark index → our 17-joint format.
-    // Note: indices 29/30 are "left/right foot index" (closest to OpenPose big toe).
+    // Note: indices 31/32 are "left/right foot index" (closest to OpenPose big toe).
     // MediaPipe does NOT output neck or midhip — we derive them below.
     const map = {
         nose: 0, lshoulder: 11, rshoulder: 12, lelbow: 13, relbow: 14,

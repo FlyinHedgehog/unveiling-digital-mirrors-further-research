@@ -7,7 +7,7 @@
  * and matching pipeline used in cluster_poses.py (Python backend).
  *
  * Pipeline: Raw keypoints → Normalize (bounding box → origin → unit vector)
- *           → Euclidean distance to 150 cluster prototypes → Nearest match
+ *           → Euclidean distance to every dataset pose → cluster of the nearest one
  *
  * Based on: Tsolak & Kühne (2025), "Unveiling digital mirrors: Decoding
  * gendered body poses in Instagram imagery", CHB 163.
@@ -53,7 +53,7 @@ export const KEYPOINT_NAMES = [
  *   1. Collect x/y values for all detected joints (in KEYPOINT_NAMES order).
  *   2. Bounding-box shift: bottom-left = (x_min, y_max) becomes (0, 0).
  *      (In image coordinates y increases downward, so "bottom" = max y.)
- *   3. Flatten to a 1-D vector [x'_0, y'_0, x'_1, y'_1, ...].
+ *   3. Flatten to a 1-D vector [x'_0, x'_1, ..., y'_0, y'_1, ...].
  *   4. Normalize to unit length (L2 norm = 1).
  *
  * @param {Object} kp - {joint_name: {x, y}} for detected joints
@@ -172,7 +172,7 @@ export function getGenderColor(cluster) {
 
 /**
  * Draw a mini stick-figure skeleton on a canvas element.
- * Used for cluster prototype thumbnails in the gallery/match cards.
+ * Used for the match cards and the Database page.
  * Auto-scales and centers the pose within the canvas bounding box.
  */
 export function drawMiniSkeleton(canvas, pose, color = '#f9e2af') {

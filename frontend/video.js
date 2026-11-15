@@ -6,13 +6,10 @@
  * Flow:
  *   1. User uploads a video (max 30s).
  *   2. We seek to each 0.5s mark, run MediaPipe Pose, store landmarks.
- *   3. Each frame's landmarks are normalized and matched to the nearest
- *      of 150 pose clusters (same pipeline as cluster_poses.py).
+ *   3. Each frame's landmarks are normalized (same way as cluster_poses.py)
+ *      and matched to the nearest dataset pose; its cluster is reported.
  *   4. Results are shown as a gallery, playback with skeleton overlay,
  *      summary counts (masculine/feminine/neutral), and a timeline chart.
- *
- * The first/last 2 seconds of the video are skipped to exclude
- * intro/outro frames that rarely contain representative body poses.
  */
 
 import {
