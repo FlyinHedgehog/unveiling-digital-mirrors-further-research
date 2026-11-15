@@ -269,6 +269,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         $('uploadPlaceholder').style.display = 'none';
         $('previewArea').style.display = 'flex';
         $('clearBtn').style.display = 'inline-block';
+        updatePatternPanel(null);
         const img = new Image();
         img.onload = async () => {
             const canvas = $('previewCanvas');
@@ -277,7 +278,11 @@ document.addEventListener('DOMContentLoaded', async () => {
             const scale = Math.min(canvas.width / img.width, canvas.height / img.height);
             const w = img.width * scale, h = img.height * scale;
             ctx.drawImage(img, (canvas.width - w) / 2, (canvas.height - h) / 2, w, h);
-            await processImage(img);
+            const kp = await processImage(img);
+            if (!kp) $('patternContent').innerHTML = '<p class="placeholder-text">No pose detected in this image</p>';
+        };
+        img.onerror = () => {
+            $('patternContent').innerHTML = '<p class="placeholder-text">Could not load this image</p>';
         };
         img.src = URL.createObjectURL(file);
     }
@@ -317,7 +322,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         $('previewArea').style.display = 'none';
         $('clearBtn').style.display = 'none';
         $('imageInput').value = '';
-        updatePatternPanel(null);
+        $('patternContent').innerHTML = '<p class="placeholder-text">Upload an image to see pose analysis</p>';
         updateMatchingClusters();
     };
 });

@@ -662,6 +662,7 @@ async function handleVideoUpload(file) {
     $('progressFill').style.width = '0%';
     $('progressText').textContent = '0%';
     $('processingText').textContent = 'Loading video...';
+    updatePatternPanel(null);
 
     const video = $('videoElement');
     if (video.src?.startsWith('blob:')) {
@@ -769,7 +770,7 @@ function resetToUpload() {
     $('clearBtn').style.display = 'none';
     $('videoInput').value = '';
 
-    updatePatternPanel(null);
+    $('patternContent').innerHTML = '<p class="placeholder-text">Upload a video to see pose analysis</p>';
     updateMatchingClusters();
 }
 
