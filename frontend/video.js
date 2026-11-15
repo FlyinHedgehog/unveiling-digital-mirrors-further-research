@@ -47,7 +47,7 @@ let currentPoseIndex = 0;              // Currently selected pose in gallery
 let isProcessing = false;              // True while extracting frames
 let isPlaying = false;                 // True during video playback
 let animationFrameId = null;           // rAF handle for playback loop
-let isCancelled = false;               // User pressed cancel
+let currentRun = 0;                    // Changes on every upload/reset so older runs stop
 let lastPlaybackLandmarks = null;      // Most recent live-detected landmarks
 let playbackDetectionPending = false;  // Waiting for MediaPipe result
 let lastPlaybackDetectionTime = 0;     // Timestamp of last live detection
@@ -432,7 +432,7 @@ async function initMediaPipe() {
 }
 
 async function detectPose(videoElement) {
-    if (isCancelled || !videoElement.videoWidth || !videoElement.videoHeight) return null;
+    if (!videoElement.videoWidth || !videoElement.videoHeight) return null;
 
     return new Promise((resolve) => {
         const timeout = setTimeout(() => { pendingCallback = null; resolve(null); }, 5000);
@@ -443,7 +443,7 @@ async function detectPose(videoElement) {
 
         pendingCallback = (results) => {
             clearTimeout(timeout);
-            resolve(isCancelled ? null : results);
+            resolve(results);
         };
 
         mediapipePose.send({ image: canvas }).catch(() => { clearTimeout(timeout); pendingCallback = null; resolve(null); });
@@ -454,9 +454,8 @@ async function detectPose(videoElement) {
 // VIDEO PROCESSING
 // -----------------------------------------------------------------------------
 
-async function processVideoInBackground(video) {
+async function processVideoInBackground(video, run) {
     isProcessing = true;
-    isCancelled = false;
     extractedPoses = [];
 
     const canvas = $('processingCanvas');
@@ -471,22 +470,21 @@ async function processVideoInBackground(video) {
     const totalFrames = Math.floor((endTime - startTime) / FRAME_INTERVAL) + 1;
     $('processingText').textContent = 'Extracting poses...';
 
-    for (let i = 0; i < totalFrames && isProcessing && !isCancelled; i++) {
+    for (let i = 0; i < totalFrames && run === currentRun; i++) {
         const time = startTime + (i * FRAME_INTERVAL);
 
         await new Promise(resolve => {
-            if (isCancelled) { resolve(); return; }
             const onSeeked = () => { video.removeEventListener('seeked', onSeeked); setTimeout(resolve, 100); };
             video.addEventListener('seeked', onSeeked);
             video.currentTime = time;
             setTimeout(() => { video.removeEventListener('seeked', onSeeked); resolve(); }, 500);
         });
 
-        if (isCancelled) break;
+        if (run !== currentRun) break;
         drawVideoFrame(ctx, video);
 
         const result = await detectPose(video);
-        if (isCancelled) break;
+        if (run !== currentRun) break;
 
         if (result?.poseLandmarks) {
             const landmarks = result.poseLandmarks.map(lm => ({ x: lm.x, y: lm.y, z: lm.z, visibility: lm.visibility }));
@@ -514,8 +512,9 @@ async function processVideoInBackground(video) {
         $('processingText').textContent = `Extracting poses... (${extractedPoses.length} found)`;
     }
 
+    if (run !== currentRun) return false;
     isProcessing = false;
-    return !isCancelled && extractedPoses.length > 0;
+    return extractedPoses.length > 0;
 }
 
 // -----------------------------------------------------------------------------
@@ -639,7 +638,7 @@ function togglePlayback() {
 // -----------------------------------------------------------------------------
 
 async function handleVideoUpload(file) {
-    isCancelled = false;
+    const run = ++currentRun;
     isProcessing = false;
     isPlaying = false;
     pendingCallback = null;
@@ -681,10 +680,12 @@ async function handleVideoUpload(file) {
             else { video.onloadeddata = resolve; setTimeout(resolve, 2000); }
         });
     } catch (err) {
+        if (run !== currentRun) return;
         alert('Failed to load video. Please try another file.');
         resetToUpload();
         return;
     }
+    if (run !== currentRun) return;
 
     if (video.duration > MAX_DURATION) {
         alert(`Video too long (${video.duration.toFixed(0)}s). Max ${MAX_DURATION}s allowed.`);
@@ -692,14 +693,12 @@ async function handleVideoUpload(file) {
         return;
     }
 
-    if (isCancelled) return;
-
     $('processingText').textContent = 'Loading model...';
     if (!mediapipeReady) await initMediaPipe();
-    if (isCancelled) return;
+    if (run !== currentRun) return;
 
-    const success = await processVideoInBackground(video);
-    if (isCancelled) return;
+    const success = await processVideoInBackground(video, run);
+    if (run !== currentRun) return;
 
     if (!success) {
         alert('No poses detected. Try a video with a visible person.');
@@ -746,7 +745,7 @@ function showResults() {
 }
 
 function resetToUpload() {
-    isCancelled = true;
+    currentRun++;
     isProcessing = false;
     isPlaying = false;
     pendingCallback = null;
@@ -772,8 +771,6 @@ function resetToUpload() {
 
     updatePatternPanel(null);
     updateMatchingClusters();
-
-    setTimeout(() => { isCancelled = false; }, 100);
 }
 
 // -----------------------------------------------------------------------------
