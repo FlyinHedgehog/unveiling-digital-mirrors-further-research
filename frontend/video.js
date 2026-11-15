@@ -21,7 +21,6 @@ import {
     getGenderColor,
     drawMiniSkeleton,
     getHowItWorksHTML,
-    normalizeKeypoints,
     parsePoseClustersCSV,
     parseNormalizedPosesCSV
 } from './pose-utils.js';
@@ -332,29 +331,16 @@ function renderPosesGallery() {
         const gc = m?.character || 'neutral';
         const label = gc === 'masculine' ? 'Masc' : gc === 'feminine' ? 'Fem' : 'Neut';
         const color = getGenderColor({ character: gc });
-        const frameSrc = p.frameDataUrl || '';
         return `
             <div class="pose-thumb ${i === currentPoseIndex ? 'active' : ''}" data-index="${i}">
                 <div class="pose-thumb-img">
-                    ${frameSrc ? `<img src="${frameSrc}" alt="Frame ${i}" width="100" height="100" />` : `<canvas id="pose${i}" width="100" height="100"></canvas>`}
+                    <img src="${p.frameDataUrl}" alt="Frame ${i}" width="100" height="100" />
                 </div>
                 <span class="pose-time">${formatTime(p.time)}</span>
                 <span class="pose-label" style="color:${color}">${label}</span>
             </div>
         `;
     }).join('');
-
-    setTimeout(() => {
-        extractedPoses.forEach((p, i) => {
-            if (!p.frameDataUrl && p.normalizedKeypoints) {
-                const canvas = container.querySelector(`#pose${i}`);
-                const m = getMatchForPose(p);
-                const gc = m?.character || 'neutral';
-                const color = getGenderColor({ character: gc });
-                if (canvas) drawMiniSkeleton(canvas, p.normalizedKeypoints, color);
-            }
-        });
-    }, 10);
 
     container.querySelectorAll('.pose-thumb').forEach(el => {
         el.onclick = () => selectPose(parseInt(el.dataset.index));
@@ -496,11 +482,6 @@ async function processVideoInBackground(video, run) {
 
             extractedPoses.push({
                 time, frameIndex: i, landmarks,
-                normalizedKeypoints: normalizeKeypoints(kp),
-                cluster: match?.cluster || null,
-                character: match ? match.character : 'neutral',
-                malePercent: match?.malePercent || 0,
-                femalePercent: match?.femalePercent || 0,
                 frameDataUrl,
                 match
             });

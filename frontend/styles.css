@@ -546,7 +546,6 @@ body {
     background: var(--surface-light);
 }
 
-.pose-thumb canvas,
 .pose-thumb .pose-thumb-img {
     display: block;
     margin-bottom: 5px;
