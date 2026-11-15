@@ -268,7 +268,7 @@ export function parsePoseClustersCSV(csvText) {
             femalePercent: +row.femalePercent,
             nonbinaryPercent: +row.nonbinaryPercent,
             significant: row.significant === '1',
-            pValue: +row.pValue,
+            pValue: row.pValue === '' ? null : +row.pValue,
             size: +row.size,
             prototype: {}
         };
