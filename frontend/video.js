@@ -457,6 +457,8 @@ async function detectPose(videoElement) {
 async function processVideoInBackground(video, run) {
     isProcessing = true;
     extractedPoses = [];
+    // Drop tracking state left over from an earlier video or from playback
+    mediapipePose.reset();
 
     const canvas = $('processingCanvas');
     const ctx = canvas.getContext('2d');

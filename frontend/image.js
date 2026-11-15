@@ -247,6 +247,8 @@ async function processImage(img) {
             updateMatchingClusters();
             resolve(kp);
         };
+        // Each image is unrelated to the previous one, so drop the tracking state first
+        mediapipePose.reset();
         mediapipePose.send({ image: img }).catch(() => {
             clearTimeout(timeout);
             pendingCallback = null;
