@@ -74,7 +74,7 @@
          *   - Neutral: non-significant clusters (no gender imbalance)
          *
          * Clicking a cluster opens a popup showing the prototype (average pose)
-         * and all individual poses in that cluster.
+         * and up to 100 individual poses of that cluster.
          */
         import { 
             drawMiniSkeleton, 
@@ -146,10 +146,10 @@
             note.style.display = 'block';
             
             if (gender === 'male') {
-                note.innerHTML = `<strong>📊 Significantly Masculine Poses (multinomial test)</strong><br>
+                note.innerHTML = `<strong>📊 Significantly Masculine Poses (chi-squared test)</strong><br>
                     These ${clusterCount} pose categories have significantly more male representation than expected (p &lt; 0.001/150).`;
             } else if (gender === 'female') {
-                note.innerHTML = `<strong>📊 Significantly Feminine Poses (multinomial test)</strong><br>
+                note.innerHTML = `<strong>📊 Significantly Feminine Poses (chi-squared test)</strong><br>
                     These ${clusterCount} pose categories have significantly more female representation than expected (p &lt; 0.001/150).`;
             } else {
                 note.innerHTML = `<strong>📊 Non-significant/Neutral Poses</strong><br>
