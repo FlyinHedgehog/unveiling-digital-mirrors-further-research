@@ -22,6 +22,8 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         if self.path.startswith('/api/list'):
             import json, urllib.parse
             media_type = urllib.parse.parse_qs(urllib.parse.urlparse(self.path).query).get('type', ['videos'])[0]
+            if media_type not in ('videos', 'images'):
+                media_type = 'videos'
             target = ROOT_DIRECTORY / 'data' / media_type
             files = sorted([f.name for f in target.iterdir() if f.is_file() and f.suffix.lower() in {'.mp4', '.webm', '.mov', '.jpg', '.jpeg', '.png', '.webp'}]) if target.exists() else []
             self.send_response(200)
